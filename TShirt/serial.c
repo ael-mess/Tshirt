@@ -39,3 +39,13 @@ if(c=='\n') send_serial('\r');
 send_serial(c);
 return 0;
 }
+
+void send_serial_string(char * c){
+char s = c[0];
+int cp = 0;
+while(s != '\0'){
+    send_serial(s);
+    cp++;
+    s=c[cp];
+}
+}

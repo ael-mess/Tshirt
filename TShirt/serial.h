@@ -4,3 +4,4 @@ void init_serial(unsigned long int speed);
 void send_serial(char c);
 char get_serial(void);
 void init_printf(void);
+void send_serial_string(char * c);
