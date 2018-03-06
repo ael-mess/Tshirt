@@ -9,13 +9,78 @@
 #define MAC_SIZE	6
 #define IPV4_SIZE	4
 
-typedef struct TShirt {
-    uint8_t interr, boutton, nom[32];
-    float accelx, accely, accelz, temp;
-} TShirt;
+char data[5]={
+    0x01, // id
+    0x00, // acceleration x
+    0x00, // acceleration y
+    0x00, // acceleration z
+    0x00 // temperature
+};
+char hip[20]={
+    0x45,0x00, // Ipv4, Taille entêtes, Type service
+    0x00,0x21, // Longueur totale
+    0x00,0x00,0x40,0x00, // Fragmentation
+    0x40,0x11, // Durée de vie, Protocole
+    0x00,0x00, // Somme de contrôle
+    0xAC,0x1A,0x4F,0xCB, // ip source
+    0xAC,0x1A,0x4F,0xCA // ip destination
+};
+char hudp[8]={
+    0x04,0x00, // Port source
+    0x04,0x00, // Port destination
+    0x00,0x0D, // Longueur
+    0x00,0x00 // Somme de contrôle
+};
 
-char hip[20] = {0x45,0x00,,,0x00,0x00,0x40,0x00,0x40,0x11,,,0xAC,0x1A,0x4F,0xCB,0xAC,0x1A,0x4F,0xCA};
-char hudp[8] = {,,,,,,,};
+void trame_slip(char hip[20], char hudp[8], char data[5]) //envoi de la trame avec protocole SLIP
+{
+    int i;
+    for(i=0;i<33;i++)
+    {
+        if(i<20) {                                 //envoi ip sur le port serie
+            if (hip[i] == 0xC0) {
+                send_serial(0xDB); //ESC
+                send_serial(0xDC); //ESC_END
+            }
+            else if (hip[i] == 0xDB) {
+                send_serial(0xDB); //ESC
+                send_serial(0xDD); //ESC_ESC
+            }
+            else {
+                send_serial(hip[i]);
+            }
+        }
+        
+        else if(i<28 && i>19) {                     //envoi udp sur le port serie
+            if (hudp[i-20] == 0xC0) {
+                send_serial(0xDB); //ESC
+                send_serial(0xDC); //ESC_END
+            }
+            else if (hudp[i-20] == 0xDB) {
+                send_serial(0xDB); //ESC
+                send_serial(0xDD); //ESC_ESC
+            }
+            else {
+                send_serial(hudp[i-20]);
+            }
+        }
+        
+        else {                                      //envoi des data sur le port serie
+            if (data[i-28] == 0xC0) {
+                send_serial(0xDB); //ESC
+                send_serial(0xDC); //ESC_END
+            }
+            else if (data[i-28] == 0xDB) {
+                send_serial(0xDB); //ESC
+                send_serial(0xDD); //ESC_ESC
+            }
+            else {
+                send_serial(data[i-28]);
+            }
+        }
+    }
+    send_serial(0xC0);                              //E.N.D SLIP
+}
 
 int main(void)
 {
@@ -23,29 +88,15 @@ int main(void)
     while(1) 
     {
         ad_init(0x0);
-        int sm = ad_sample();
-        send_serial('x');
-        send_serial((sm/100)+48);
-        send_serial((sm/10-(sm/100)*10)+48);
-        send_serial((sm-((sm/10-(sm/100)*10))*10-(sm/100)*100)+48);
-        send_serial(' ');
-        
+        data[1] = ad_sample(); // accX
         ad_init(0x1);
-        sm = ad_sample();
-        send_serial('y');
-        send_serial((sm/100)+48);
-        send_serial((sm/10-(sm/100)*10)+48);
-        send_serial((sm-((sm/10-(sm/100)*10))*10-(sm/100)*100)+48);
-        send_serial(' ');
-        
+        data[2] = ad_sample(); // accY
         ad_init(0x2);
-        sm = ad_sample();
-        send_serial('z');
-        send_serial((sm/100)+48);
-        send_serial((sm/10-(sm/100)*10)+48);
-        send_serial((sm-((sm/10-(sm/100)*10))*10-(sm/100)*100)+48);
-        send_serial(' ');
+        data[3] = ad_sample(); //accZ
+        ad_init(0x3);
+        data[4] = ad_sample(); //temp
         
+        trame_slip(hip,hudp,data); //envoi trame slip
     }
     return 0;
 }
