@@ -8,3 +8,5 @@
 /**** Constantes ****/
 
 /**** Fonctions ****/
+int initialisationServeur(char *service);
+int boucleServeur(int ecoute,int (*traitement)(int));

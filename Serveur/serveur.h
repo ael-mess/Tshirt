@@ -9,3 +9,5 @@
 /** Structures **/
 
 /** Variables publiques  **/
+int gestionClient(int s);
+char *analyseArguments(int argc,char *argv[]);

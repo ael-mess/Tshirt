@@ -1,4 +1,10 @@
 /** Fichier serveur.c **/
+#include <getopt.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "../Communication/libcom.h"
+#include "../Threads/libthrd.h"
 
 /***********************************************************/
 /** Serveur pour le serveur                               **/
@@ -7,8 +13,10 @@
 /** Fichiers d'inclusion **/
 
 /** Constantes **/
-
+boucleServeur
 /** Variables publiques **/
+extern char *optarg;
+extern int optind, opterr, optopt;
 
 /** Variables statiques **/
 
@@ -29,18 +37,26 @@ int gestionClient(int s){
 	return 0;
 }
 
+char *analyseArguments(int argc,char *argv[])
+{
+    static struct option opt = {"port", 1, 0, 'p'};
+    if(getopt_long(argc, argv, "p:", &opt, NULL) == 'p') return optarg; //aqpaq
+    else return "80";
+}
+
 int main(int argc,char *argv[])
 {
 	int s;
 	 
 	/* Lecture des arguments de la commande */
 	//analyseArguments(argc,argv);
-	char *service = argv[1];
+	char *service = analyseArguments(argc,argv);
+    printf("%s\n", service);
     
 	/* Initialisation du serveur */
 	s=initialisationServeur(service);
 	   
 	/* Lancement de la boucle d'ecoute */
 	boucleServeur(s,gestionClient);
+    lanceThread(getionClient, s, 50);
 }
-
