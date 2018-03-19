@@ -76,21 +76,25 @@ int initialisationServeur(char *service)
 
 int boucleServeur(int ecoute,int (*traitement)(int))
 {
+    printf("while loop serv sfd :%d\n", ecoute);
     int dialogue;
-
     while(1){
+        printf("loop \n");
 
         /* Attente d'une connexion */
         if((dialogue=accept(ecoute,NULL,NULL))<0) return -1;
+        printf("dialogue %d\n", dialogue);
 
         /* Passage de la socket de dialogue a la fonction de traitement */
         if(traitement(dialogue)<0){ shutdown(ecoute,SHUT_RDWR); return 0;}
     }
 }
 
-void *gestionClient(int *s){
+int gestionClient(int s)
+{
+    printf("function %d\n", s);
 	/* Obtient une structure de fichier */
-	FILE *dialogue=fdopen(*s,"a+");
+	FILE *dialogue=fdopen(s,"a+");
 	if(dialogue==NULL){ perror("gestionClient.fdopen"); exit(EXIT_FAILURE); }
 
 	/* Echo */
@@ -100,40 +104,55 @@ void *gestionClient(int *s){
 
 	/* Termine la connexion */
 	fclose(dialogue);
+    return 0;
 }
 
-char *analyseArguments(int argc,char *argv[])
+void *wrapper_gestionClient(void *arg)
+{
+    int s = *((int *) (arg));
+    printf("while thread sfd :%d\n", s);
+    int ecoute = boucleServeur(s,gestionClient);
+    printf("loop return :%d\n", ecoute);
+
+    int statut=gestionClient(s);
+    if(statut!=0) { perror("gesionClient.wrapper"); exit(EXIT_FAILURE); }
+    return NULL;
+}
+
+char *analyseArguments(int argc, char *argv[])
 {
     static struct option opt = {"port", 1, 0, 'p'};
     if(getopt_long(argc, argv, "p:", &opt, NULL) == 'p') return optarg; //aqpaq
     else return "80";
 }
 
-int lanceThread(void *(*thread)(void *), void *arg, int taille)
+void lanceThread(void *(*thread)(void *), void *arg, int taille)
 {
     pthread_t tid;
-    pthread_detach(tid); //compile with -lpthread
-    pthread_create(&tid, NULL, thread, arg);
-    
-    //int status;
-    //pthread_exit((void *)&status);
-    return tid;
+    pthread_attr_t attr;
+
+    int rc = pthread_attr_init(&attr);
+    if(rc == 0) printf("    Initialisation yes\n");
+    rc = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+    if(rc == 0) printf("    Detached state yes\n");
+    rc = pthread_create(&tid, &attr, thread, arg);
+    if(rc == 0) printf("    Creation yes\n");
+
+    int chk;
+    pthread_attr_getdetachstate(&attr, &chk);
+    if(chk == PTHREAD_CREATE_DETACHED) printf("    Detached\n");
 }
 
 int main(int argc,char *argv[])
 {
-	int s;
-	 
 	/* Lecture des arguments de la commande */
-	//analyseArguments(argc,argv);
 	char *service = analyseArguments(argc,argv);
-    printf("%s\n", service);
-    
+    printf("service :%s\n", service);
+
 	/* Initialisation du serveur */
-	s=initialisationServeur(service);
-	   
+	int s=initialisationServeur(service);
+
 	/* Lancement de la boucle d'ecoute */
 	//boucleServeur(s,gestionClient);
-	printf("%d\n", s);
-	lanceThread((void *(*)(void*))gestionClient, (void *)&s, 50);
+	lanceThread((void *(*)(void*))wrapper_gestionClient, (void *)&s, 500);
 }

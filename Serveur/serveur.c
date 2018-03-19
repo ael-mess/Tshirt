@@ -22,7 +22,8 @@ extern int optind, opterr, optopt;
 
 /** Procedure principale **/
 
-int gestionClient(int s){
+int gestionClient(int s)
+{
 	/* Obtient une structure de fichier */
 	FILE *dialogue=fdopen(s,"a+");
 	if(dialogue==NULL){ perror("gestionClient.fdopen"); exit(EXIT_FAILURE); }
