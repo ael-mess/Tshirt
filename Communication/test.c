@@ -24,6 +24,12 @@
 extern char *optarg;
 extern int optind, opterr, optopt;
 
+typedef struct thread_struct
+   {
+   void *(*thread)(void*);
+   int arg;
+   } thread_struct;
+
 /**** Prototype des fonctions locales *****/
 
 /**** Fonctions de gestion des sockets ****/
@@ -74,19 +80,19 @@ int initialisationServeur(char *service)
     return s;
 }
 
-int boucleServeur(int ecoute,int (*traitement)(int))
+int boucleServeur(thread_struct ecoute,int (*traitement)(void *(*)(void *), void *, int))
 {
-    printf("while loop serv sfd :%d\n", ecoute);
+    printf("while loop serv sfd :%d\n", ecoute.arg);
     int dialogue;
     while(1){
         printf("loop \n");
 
         /* Attente d'une connexion */
-        if((dialogue=accept(ecoute,NULL,NULL))<0) return -1;
+        if((dialogue=accept(ecoute.arg,NULL,NULL))<0) return -1;
         printf("dialogue %d\n", dialogue);
 
         /* Passage de la socket de dialogue a la fonction de traitement */
-        if(traitement(dialogue)<0){ shutdown(ecoute,SHUT_RDWR); return 0;}
+        if(traitement(ecoute.thread,(void *)&dialogue,50)<0){ shutdown(ecoute.arg,SHUT_RDWR); return 0;}
     }
 }
 
@@ -104,6 +110,7 @@ int gestionClient(int s)
 
 	/* Termine la connexion */
 	fclose(dialogue);
+
     return 0;
 }
 
@@ -111,8 +118,8 @@ void *wrapper_gestionClient(void *arg)
 {
     int s = *((int *) (arg));
     printf("while thread sfd :%d\n", s);
-    int ecoute = boucleServeur(s,gestionClient);
-    printf("loop return :%d\n", ecoute);
+    //int ecoute = gestionClient(s);
+    //printf("loop return :%d\n", ecoute);
 
     int statut=gestionClient(s);
     if(statut!=0) { perror("gesionClient.wrapper"); exit(EXIT_FAILURE); }
@@ -126,7 +133,7 @@ char *analyseArguments(int argc, char *argv[])
     else return "80";
 }
 
-void lanceThread(void *(*thread)(void *), void *arg, int taille)
+int lanceThread(void *(*thread)(void *), void *arg, int taille)
 {
     pthread_t tid;
     pthread_attr_t attr;
@@ -141,18 +148,22 @@ void lanceThread(void *(*thread)(void *), void *arg, int taille)
     int chk;
     pthread_attr_getdetachstate(&attr, &chk);
     if(chk == PTHREAD_CREATE_DETACHED) printf("    Detached\n");
+    //while(1);
+    //pthread_join(tid, NULL);
+    return 0;
 }
 
 int main(int argc,char *argv[])
 {
 	/* Lecture des arguments de la commande */
 	char *service = analyseArguments(argc,argv);
-    printf("service :%s\n", service);
+    	printf("service :%s\n", service);
 
 	/* Initialisation du serveur */
 	int s=initialisationServeur(service);
 
 	/* Lancement de la boucle d'ecoute */
-	//boucleServeur(s,gestionClient);
-	lanceThread((void *(*)(void*))wrapper_gestionClient, (void *)&s, 500);
+	thread_struct ths = {(void *(*)(void*))wrapper_gestionClient, s};
+	boucleServeur(ths, lanceThread);
+	//lanceThread((void *(*)(void*))wrapper_gestionClient, (void *)&s, 500);
 }
