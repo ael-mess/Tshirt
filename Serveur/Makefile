@@ -4,9 +4,9 @@
 
 OBJS = serveur.o
 LIBS = -lpthread
-LOCAL_LIBS  = -L ../Communication # -L ../Threads
-LOCAL_LIBS += -lcom # -lthrd
-CFLAGS     += -I ../Communication # -I ../Threads
+LOCAL_LIBS  = -L ../Communication  -L ../Threads
+LOCAL_LIBS += -lcom -lthrd
+CFLAGS     += -I ../Communication  -I ../Threads
 
 #
 # Cible generale

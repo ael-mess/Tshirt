@@ -10,4 +10,5 @@
 
 /** Variables publiques  **/
 int gestionClient(int s);
-char *analyseArguments(int argc,char *argv[]);
+void *wrapper_gestionClient(void *arg);
+char *analyseArguments(int argc, char *argv[]);

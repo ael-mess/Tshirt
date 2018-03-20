@@ -82,16 +82,35 @@ int initialisationServeur(char *service)
     return s;
 }
 
-int boucleServeur(int ecoute,int (*traitement)(int))
+int boucleServeur(thread_struct ecoute,int (*traitement)(void *(*)(void *), void *, int))
 {
+    printf("while loop serv sfd :%d\n", ecoute.arg);
     int dialogue;
-
     while(1){
 
         /* Attente d'une connexion */
-        if((dialogue=accept(ecoute,NULL,NULL))<0) return -1;
+        if((dialogue=accept(ecoute.arg,NULL,NULL))<0) return -1;
 
         /* Passage de la socket de dialogue a la fonction de traitement */
-        if(traitement(dialogue)<0){ shutdown(ecoute,SHUT_RDWR); return 0;}
+        if(traitement(ecoute.thread,(void *)&dialogue,50)<0){ shutdown(ecoute.arg,SHUT_RDWR); return 0;}
     }
 }
+
+/*int boucleServeurUDP(int s,int (*traitement)(unsigned char *,int)){
+while(1){
+  struct sockaddr_storage adresse;
+  socklen_t taille=sizeof(adresse);
+  unsigned char message[MAX_UDP_MESSAGE];
+  int nboctets=recvfrom(s,message,MAX_UDP_MESSAGE,0,(struct sockaddr *)&adresse,&taille);
+  if(nboctets<0) return -1;
+  if(traitement(message,nboctets)<0) break;
+  }
+return 0;
+}
+
+int main(void){
+int s=initialisationSocketUDP("4242");
+boucleServeurUDP(s,votreFonctionUDP);
+close(s);
+return 0;
+}*/

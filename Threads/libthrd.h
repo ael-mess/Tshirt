@@ -1,1 +1,1 @@
-int lanceThread(void (*thread)(void *), void *arg, int taille);
+int lanceThread(void *(*thread)(void *), void *arg, int taille);
