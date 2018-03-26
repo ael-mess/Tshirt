@@ -96,21 +96,20 @@ int boucleServeur(thread_struct ecoute,int (*traitement)(void *(*)(void *), void
     }
 }
 
-/*int boucleServeurUDP(int s,int (*traitement)(unsigned char *,int)){
-while(1){
-  struct sockaddr_storage adresse;
-  socklen_t taille=sizeof(adresse);
-  unsigned char message[MAX_UDP_MESSAGE];
-  int nboctets=recvfrom(s,message,MAX_UDP_MESSAGE,0,(struct sockaddr *)&adresse,&taille);
-  if(nboctets<0) return -1;
-  if(traitement(message,nboctets)<0) break;
-  }
-return 0;
+int boucleServeurUDP(int s,int (*traitement)(unsigned char *,int)){
+    while(1){
+        struct sockaddr_storage adresse;
+        socklen_t taille=sizeof(adresse);
+        unsigned char message[1500];
+        int nboctets=recvfrom(s,message,1500,0,(struct sockaddr *)&adresse,&taille);
+        if(nboctets<0) return -1;
+        if(traitement(message,nboctets)<0) break;
+    }
+    return 0;
 }
 
-int main(void){
-int s=initialisationSocketUDP("4242");
-boucleServeurUDP(s,votreFonctionUDP);
-close(s);
-return 0;
-}*/
+int traitement(unsigned char * message, int taille)
+{
+    printf("salut %s, %d\n", message, taille);
+    return 0;
+}

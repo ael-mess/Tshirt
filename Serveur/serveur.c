@@ -68,8 +68,10 @@ int main(int argc,char *argv[])
 	int s=initialisationServeur(service);
 
 	/* Lancement de la boucle d'ecoute */
-	thread_struct ths = {(void *(*)(void*))wrapper_gestionClient, s};
-	boucleServeur(ths, lanceThread);
-	//lanceThread((void *(*)(void*))wrapper_gestionClient, (void *)&s, 500);
+	//thread_struct ths = {(void *(*)(void*))wrapper_gestionClient, s};
+	//boucleServeur(ths, lanceThread);
+	boucleServeurUDP(s,traitement);
+    close(s);
+    return 0;
 }
 
