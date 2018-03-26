@@ -82,34 +82,78 @@ int initialisationServeur(char *service)
     return s;
 }
 
-int boucleServeur(thread_struct ecoute,int (*traitement)(void *(*)(void *), void *, int))
+int boucleServeur(int s,void *(*traitement)(void *))
 {
-    printf("while loop serv sfd :%d\n", ecoute.arg);
+    printf("while loop serv sfd :%d\n", s);
     int dialogue;
     while(1){
 
         /* Attente d'une connexion */
-        if((dialogue=accept(ecoute.arg,NULL,NULL))<0) return -1;
+        if((dialogue=accept(s,NULL,NULL))<0) return -1;
 
         /* Passage de la socket de dialogue a la fonction de traitement */
-        if(traitement(ecoute.thread,(void *)&dialogue,50)<0){ shutdown(ecoute.arg,SHUT_RDWR); return 0;}
+        if(lanceThread(traitement, (void *)&dialogue,50)<0){ shutdown(s,SHUT_RDWR); return 0;}
     }
 }
 
-int boucleServeurUDP(int s,int (*traitement)(unsigned char *,int)){
+int initialisationSocketUDP(char *service){
+    struct addrinfo precisions,*resultat,*origine;
+    int statut;
+    int s;
+
+    /* Construction de la structure adresse */
+    memset(&precisions,0,sizeof precisions);
+    precisions.ai_family=AF_UNSPEC;
+    precisions.ai_socktype=SOCK_DGRAM;
+    precisions.ai_flags=AI_PASSIVE;
+    statut=getaddrinfo(NULL,service,&precisions,&origine);
+    if(statut<0){ perror("initialisationSocketUDP.getaddrinfo"); exit(EXIT_FAILURE); }
+    struct addrinfo *p;
+    for(p=origine,resultat=origine;p!=NULL;p=p->ai_next)
+      if(p->ai_family==AF_INET6){ resultat=p; break; }
+
+    /* Creation d'une socket */
+    s=socket(resultat->ai_family,resultat->ai_socktype,resultat->ai_protocol);
+    if(s<0){ perror("initialisationSocketUDP.socket"); exit(EXIT_FAILURE); }
+
+    /* Options utiles */
+    int vrai=1;
+    if(setsockopt(s,SOL_SOCKET,SO_REUSEADDR,&vrai,sizeof(vrai))<0){
+      perror("initialisationServeurUDPgenerique.setsockopt (REUSEADDR)");
+      exit(-1);
+      }
+
+    /* Specification de l'adresse de la socket */
+    statut=bind(s,resultat->ai_addr,resultat->ai_addrlen);
+    if(statut<0) {perror("initialisationServeurUDP.bind"); exit(-1);}
+
+    /* Liberation de la structure d'informations */
+    freeaddrinfo(origine);
+
+    return s;
+}
+
+int boucleServeurUDP(int s,void *(*traitement)(void *))
+{
     while(1){
+        printf("inside while\n");
         struct sockaddr_storage adresse;
         socklen_t taille=sizeof(adresse);
         unsigned char message[1500];
+        printf("before int\n");
         int nboctets=recvfrom(s,message,1500,0,(struct sockaddr *)&adresse,&taille);
+        printf("ndoctets = %d\n",nboctets);
+        printf("before if\n");
         if(nboctets<0) return -1;
-        if(traitement(message,nboctets)<0) break;
+        printf("after if\n");
+        if(lanceThread(traitement, (void *) message,50)<0) break;
     }
     return 0;
 }
 
-int traitement(unsigned char * message, int taille)
+void *traitement(void *message)
 {
-    printf("salut %s, %d\n", message, taille);
+    unsigned char * msg = (unsigned char *) message;
+    printf("salut %s\n", msg);
     return 0;
 }

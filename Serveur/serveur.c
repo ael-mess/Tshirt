@@ -2,6 +2,7 @@
 #include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "libcom.h"
 #include "libthrd.h"
@@ -62,16 +63,17 @@ int main(int argc,char *argv[])
 {
 	/* Lecture des arguments de la commande */
 	char *service = analyseArguments(argc,argv);
-    	printf("service :%s\n", service);
+    printf("service tcp :%s\n", service);
+    printf("service udp :4242\n");
 
 	/* Initialisation du serveur */
-	int s=initialisationServeur(service);
-
-	/* Lancement de la boucle d'ecoute */
-	//thread_struct ths = {(void *(*)(void*))wrapper_gestionClient, s};
-	//boucleServeur(ths, lanceThread);
-	boucleServeurUDP(s,traitement);
-    close(s);
+	int s_serveur=initialisationServeur(service);
+    int s_client_udp=initialisationSocketUDP("4242");
+	
+    /* Lancement de la boucle d'ecoute */
+	boucleServeur(s_serveur, wrapper_gestionClient);
+	boucleServeurUDP(s_client_udp, traitement);
+    close(s_client_udp);
     return 0;
 }
 

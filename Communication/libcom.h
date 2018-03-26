@@ -6,12 +6,12 @@
 /******************************************************************/
 
 /**** Constantes ****/
-typedef struct thread_struct
-{
-   void *(*thread)(void*);
-   int arg;
-} thread_struct;
 
 /**** Fonctions ****/
 int initialisationServeur(char *service);
-int boucleServeur(thread_struct ecoute,int (*traitement)(void *(*)(void *), void *, int));
+int boucleServeur(int s,void *(*traitement)(void *));
+void *traitement(void *message);
+int boucleServeurUDP(int s,void *(*traitement)(void *));
+int initialisationSocketUDP(char *service);
+
+int lanceThread(void *(*thread)(void *), void *arg, int taille); // à enlever
