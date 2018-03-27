@@ -11,7 +11,7 @@
 int initialisationServeur(char *service);
 int boucleServeur(int s,void *(*traitement)(void *));
 void *traitement(void *message);
-int boucleServeurUDP(int s,void *(*traitement)(void *));
+int serveurMessages(int s,void *(*traitement)(void *));
 int initialisationSocketUDP(char *service);
 
 int lanceThread(void *(*thread)(void *), void *arg, int taille); // à enlever

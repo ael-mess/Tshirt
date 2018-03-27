@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "libcom.h"
 #include "libthrd.h"
@@ -61,19 +62,31 @@ char *analyseArguments(int argc, char *argv[])
 
 int main(int argc,char *argv[])
 {
-	/* Lecture des arguments de la commande */
+	//Lecture des arguments de la commande 
 	char *service = analyseArguments(argc,argv);
     printf("service tcp :%s\n", service);
     printf("service udp :4242\n");
 
-	/* Initialisation du serveur */
+	//Initialisation du serveur 
 	int s_serveur=initialisationServeur(service);
     int s_client_udp=initialisationSocketUDP("4242");
 	
-    /* Lancement de la boucle d'ecoute */
-	boucleServeur(s_serveur, wrapper_gestionClient);
-	boucleServeurUDP(s_client_udp, traitement);
+    //Lancement de la boucle d'ecoute 
+	//boucleServeur(s_serveur, wrapper_gestionClient);
+	serveurMessages(s_client_udp, traitement);
     close(s_client_udp);
     return 0;
 }
 
+
+/*int main(int argc,char *argv[]){
+	if(argc!=3){
+	  fprintf(stderr,"Syntaxe : %s <serveur> <message>\n",argv[0]);
+	  exit(EXIT_FAILURE);
+	  }
+	char *hote=argv[1];
+	char *message=argv[2];
+	char *service="4000";
+	messageUDP(hote,service,(unsigned char *)message,strlen(message));
+	return 0;
+}*/
