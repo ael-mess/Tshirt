@@ -46,7 +46,6 @@ int gestionClient(int s)
 void *wrapper_gestionClient(void *arg)
 {
     int s = *((int *) (arg));
-    printf("while thread sfd :%d\n", s);
 
     int statut=gestionClient(s);
     if(statut!=0) { perror("gesionClient.wrapper"); exit(EXIT_FAILURE); }
@@ -68,25 +67,12 @@ int main(int argc,char *argv[])
     printf("service udp :4242\n");
 
 	//Initialisation du serveur 
-	int s_serveur=initialisationServeur(service);
-    int s_client_udp=initialisationSocketUDP("4242");
+	//int s_serveur=initialisationServeur(service);
+    int s_serveur_udp=initialisationSocketUDP("4242");
 	
     //Lancement de la boucle d'ecoute 
 	//boucleServeur(s_serveur, wrapper_gestionClient);
-	serveurMessages(s_client_udp, traitement);
-    close(s_client_udp);
+	serveurMessages(s_serveur_udp, traitement);
+    close(s_serveur_udp);
     return 0;
 }
-
-
-/*int main(int argc,char *argv[]){
-	if(argc!=3){
-	  fprintf(stderr,"Syntaxe : %s <serveur> <message>\n",argv[0]);
-	  exit(EXIT_FAILURE);
-	  }
-	char *hote=argv[1];
-	char *message=argv[2];
-	char *service="4000";
-	messageUDP(hote,service,(unsigned char *)message,strlen(message));
-	return 0;
-}*/
