@@ -67,12 +67,13 @@ int main(int argc,char *argv[])
     printf("service udp :4242\n");
 
 	//Initialisation du serveur 
-	//int s_serveur=initialisationServeur(service);
+	int s_serveur=initialisationServeur(service);
     int s_serveur_udp=initialisationSocketUDP("4242");
 	
     //Lancement de la boucle d'ecoute 
-	//boucleServeur(s_serveur, wrapper_gestionClient);
+	//lanceThread(void *(*thread)(void *), void *arg, int taille);
 	serveurMessages(s_serveur_udp, traitement);
+	boucleServeur(s_serveur, wrapper_gestionClient);
     close(s_serveur_udp);
     return 0;
 }

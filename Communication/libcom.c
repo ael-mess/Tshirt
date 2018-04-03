@@ -31,7 +31,7 @@
 #define MAX_TAMPON	1024
 
 /**** Variables globales *****/
-int sudp;
+int s_serveur_udp;
 
 /**** Prototype des fonctions locales *****/
 
@@ -113,29 +113,30 @@ int initialisationSocketUDP(char *service){
       if(p->ai_family==AF_INET6){ resultat=p; break; }
 
     /* Creation d'une socket */
-    sudp=socket(resultat->ai_family,resultat->ai_socktype,resultat->ai_protocol);
-    if(sudp<0){ perror("initialisationSocketUDP.socket"); exit(EXIT_FAILURE); }
+    s_serveur_udp=socket(resultat->ai_family,resultat->ai_socktype,resultat->ai_protocol);
+    if(s_serveur_udp<0){ perror("initialisationSocketUDP.socket"); exit(EXIT_FAILURE); }
 
     /* Options utiles */
     int vrai=1;
-    if(setsockopt(sudp,SOL_SOCKET,SO_REUSEADDR,&vrai,sizeof(vrai))<0){
+    if(setsockopt(s_serveur_udp,SOL_SOCKET,SO_REUSEADDR,&vrai,sizeof(vrai))<0){
       perror("initialisationServeurUDPgenerique.setsockopt (REUSEADDR)");
       exit(-1);
       }
 
     /* Specification de l'adresse de la socket */
-    statut=bind(sudp,resultat->ai_addr,resultat->ai_addrlen);
+    statut=bind(s_serveur_udp,resultat->ai_addr,resultat->ai_addrlen);
     if(statut<0) {perror("initialisationServeurUDP.bind"); exit(-1);}
 
     /* Liberation de la structure d'informations */
     freeaddrinfo(origine);
 
-    return sudp;
+    return s_serveur_udp;
 }
 
-int serveurMessages(int s,void *(*traitement)(void *))
+int serveurMessages(int s, void *(*traitement)(void *))
 {
-    while(1){
+	int i=0;
+    while(i<5){
         struct sockaddr_storage adresse;
         socklen_t taille=sizeof(adresse);
         unsigned char message[1500];
@@ -149,32 +150,53 @@ int serveurMessages(int s,void *(*traitement)(void *))
 
         if (ser == 0) {
             printf("Received %ld bytes from %s:%s\n", (long) nboctets, host, service);
-            char messrec[32] = "reçu frère\n";
+            char messrec[32] = "reçu gy-h_i frère\n";
             if(sizeof(messrec)!=sendto(s,messrec,sizeof(messrec),0,(struct sockaddr *) &adresse,taille)) perror("serveurMessages.sendto");
         }
         else perror("serveurMessages.getnameinfo");
-        envoiMessage("4242", "  wesh frère\n", 54);
-    }
+	
+	i++;
+	}
+	envoiMessage("4241", "	broadcasrt frere ", 5465);
+	envoiMessageUnicast("4241", "127.0.0.1", " 	unicast sdfgser", 54);
     return 0;
 }
 
-int envoiMessage(char * service, unsigned char *message, int taille)
+int envoiMessage(char * service, char *message, int taille)
 {
-    //struct sockaddr_storage adresse;
-    //socklen_t taille=sizeof(adresse);
-
     struct sockaddr_in adresse;
     memset(&adresse,0,sizeof(adresse));
     adresse.sin_family = AF_INET;
-    adresse.sin_addr.s_addr = inet_addr("127.0.0.1");
-    adresse.sin_port=htons(4242);
+    adresse.sin_addr.s_addr = inet_addr("INADDR_BROADCAST");
+    adresse.sin_port=htons(atoi(service));
 
-    /*int vrai=1;
-    if(setsockopt(sudp,SOL_SOCKET,SO_BROADCAST,&vrai,sizeof(vrai))<0){
+    int vrai=1;
+    if(setsockopt(s_serveur_udp,SOL_SOCKET,SO_BROADCAST,&vrai,sizeof(vrai))<0){
         perror("envoiMessage.setsockopt (BROADCAST)");
         exit(-1);
-    }*/
-    if(0>sendto(sudp,(const char *)message,strlen((const char *)message),0,(struct sockaddr *) &adresse,sizeof(adresse))) perror("envoiMessage.sendto");
+    }
+
+    if(sendto(s_serveur_udp,(const char *)message,strlen((const char *)message),0,(struct sockaddr *)&adresse,sizeof(adresse)) <0)
+		perror("envoiMessage.sendto");
+    return 0;
+}
+
+int envoiMessageUnicast(char * service, char * machine, char *message, int taille)
+{
+	struct addrinfo precisions,*resultat,*origine;
+
+    memset(&precisions,0,sizeof(precisions));
+    precisions.ai_family=AF_UNSPEC;
+    precisions.ai_socktype=SOCK_DGRAM;
+    precisions.ai_flags=AI_PASSIVE;
+    int statut=getaddrinfo(machine,service,&precisions,&origine);
+    if(statut<0){ perror("envoiMessageUnicast.getaddrinfo"); exit(EXIT_FAILURE); }
+    struct addrinfo *p;
+    for(p=origine,resultat=origine;p!=NULL;p=p->ai_next)
+    if(p->ai_family==AF_INET6){ resultat=p; break; }
+
+    if(sendto(s_serveur_udp,(const char *)message,strlen((const char *)message),0,(struct sockaddr *)resultat->ai_addr,resultat->ai_addrlen) <0)
+		perror("envoiMessage.sendto");
     return 0;
 }
 
