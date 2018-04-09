@@ -164,11 +164,14 @@ int serveurMessages(int s, void *(*traitement)(void *))
 
 int envoiMessage(char * service, char *message, int taille)
 {
+	printf("après boucle\n");
     struct sockaddr_in adresse;
     memset(&adresse,0,sizeof(adresse));
     adresse.sin_family = AF_INET;
     adresse.sin_addr.s_addr = inet_addr("INADDR_BROADCAST");
     adresse.sin_port=htons(atoi(service));
+
+	printf("sfd : %d\n", s_serveur_udp);
 
     int vrai=1;
     if(setsockopt(s_serveur_udp,SOL_SOCKET,SO_BROADCAST,&vrai,sizeof(vrai))<0){

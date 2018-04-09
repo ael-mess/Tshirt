@@ -52,6 +52,16 @@ void *wrapper_gestionClient(void *arg)
     return NULL;
 }
 
+void *wrapper_serveurMessages(void *arg)
+{
+	int s = *((int *) (arg));
+
+	printf("salut\n");
+	int statut = serveurMessages(s, traitement);
+	if(statut!=0) { perror("serveurMessages.wrapper"); exit(EXIT_FAILURE); }
+	return NULL;
+}
+
 char *analyseArguments(int argc, char *argv[])
 {
     static struct option opt = {"port", 1, 0, 'p'};
@@ -70,9 +80,8 @@ int main(int argc,char *argv[])
 	int s_serveur=initialisationServeur(service);
     int s_serveur_udp=initialisationSocketUDP("4242");
 	
-    //Lancement de la boucle d'ecoute 
-	//lanceThread(void *(*thread)(void *), void *arg, int taille);
-	serveurMessages(s_serveur_udp, traitement);
+    //Lancement de la boucle d'ecoute
+	lanceThread(wrapper_serveurMessages, (void *)&s_serveur_udp, 555555);
 	boucleServeur(s_serveur, wrapper_gestionClient);
     close(s_serveur_udp);
     return 0;
