@@ -11,7 +11,7 @@ void trame_slip(char hip[20], char hudp[8], char data[5]) //envoi de la trame av
     int i;
     for(i=0;i<33;i++)
     {
-        if(i<20) {                                 //envoi ip sur le port serie
+        if(i<20) {                                   //envoi ip sur le port serie
             if (hip[i] == 0xC0) {
                 send_serial(0xDB); //ESC
                 send_serial(0xDC); //ESC_END
@@ -56,7 +56,38 @@ void trame_slip(char hip[20], char hudp[8], char data[5]) //envoi de la trame av
     send_serial(0xC0);                              //E.N.D SLIP
 }
 
-uint16_t checksum_udp(uint16_t len_udp, uint16_t src_addr[],uint16_t dest_addr[], bool padding, uint16_t buff[])
+uint16_t ip_checksum(void* vdata, size_t length) {
+    // Cast the data pointer to one that can be indexed.
+    char* data=(char*)vdata;
+
+    // Initialise the accumulator.
+    uint32_t acc=0xffff;
+
+    // Handle complete 16-bit blocks.
+    for (size_t i=0;i+1<length;i+=2) {
+        uint16_t word;
+        memcpy(&word,data+i,2);
+        acc+=ntohs(word);
+        if (acc>0xffff) {
+            acc-=0xffff;
+        }
+    }
+
+    // Handle any partial block at the end of the data.
+    if (length&1) {
+        uint16_t word=0;
+        memcpy(&word,data+length-1,1);
+        acc+=ntohs(word);
+        if (acc>0xffff) {
+            acc-=0xffff;
+        }
+    }
+
+    // Return the checksum in network byte order.
+    return htons(~acc);
+}
+
+/*uint16_t checksum_udp(uint16_t len_udp, uint16_t src_addr[],uint16_t dest_addr[], bool padding, uint16_t buff[])
 {
     uint16_t prot_udp=17;
     uint16_t padd=0;
@@ -99,6 +130,6 @@ uint16_t checksum_udp(uint16_t len_udp, uint16_t src_addr[],uint16_t dest_addr[]
 	sum = ~sum;
 
     return ((uint16_t) sum);
-}
+}*/
 
 
