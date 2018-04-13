@@ -216,6 +216,17 @@ int envoiMessageUnicast(char * service, char * machine, char *message, int taill
     return 0;
 }
 
+int HexToInt(char a)
+{
+	//printf("%d\n",a);
+	if(a<58) {
+		return a-48;
+	}
+	else {
+		return a-55;
+	}
+	return 0;
+}
 
 void *traitement(void *message)
 {
@@ -224,10 +235,11 @@ void *traitement(void *message)
     int i,j;
     //memset(strH,0,sizeof(strH));
     printf("transmitted message is : %s\n",msg);
-    data.id=((msg[0]-48)*10+msg[1]-48);
-    data.x=((msg[2]-48)*10+msg[3]-48);
-    data.y=((msg[4]-48)*10+msg[5]-48);
-    data.z=((msg[6]-48)*10+msg[7]-48);
-    data.temp=((msg[8]-48)*10+msg[9]-48);
+    
+	data.id=HexToInt(msg[0])*16+HexToInt(msg[1]);
+	data.x=HexToInt(msg[2])*16+HexToInt(msg[3]);
+	data.y=HexToInt(msg[4])*16+HexToInt(msg[5]);
+    data.z=HexToInt(msg[6])*16+HexToInt(msg[7]);
+    data.temp=HexToInt(msg[8])*16+HexToInt(msg[9]);
     return 0;
 }

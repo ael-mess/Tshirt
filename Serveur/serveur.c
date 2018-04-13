@@ -42,6 +42,11 @@ extern int optind, opterr, optopt;
 
 int gestionClient(int s)
 {
+	FILE* fichier = NULL;
+	fichier = fopen("/home/thibault/Bureau/tut_psr/tutorat_PSR/Serveur/index.html", "r");
+	if(fichier==NULL){ perror("gestionClient.fdopen"); exit(EXIT_FAILURE); }
+	int caractereActuel = 0;
+	
 	extern DATA data;
     printf("function %d\n", s);
 	/* Obtient une structure de fichier */
@@ -51,15 +56,23 @@ int gestionClient(int s)
 	fprintf(dialogue, "HTTP/1.1 200 OK\n");
 	//fprintf(dialogue, "Content-length: 146\n");
 	fprintf(dialogue, "Content-Type: text/html\n\n");
-	fprintf(dialogue, "<html>\n\n<body>\n\n");
+	/*fprintf(dialogue, "<html>\n\n<body>\n\n");
 	fprintf(dialogue, "<h1>Tshirt values :</h1>\n\n");
 	fprintf(dialogue, "<p>id : %d</p>\n\n",data.id);
 	fprintf(dialogue, "<p>x : %d</p>\n\n",data.x);
 	fprintf(dialogue, "<p>y : %d</p>\n\n",data.y);
 	fprintf(dialogue, "<p>z : %d</p>\n\n",data.z);
 	fprintf(dialogue, "<p>temp : %d</p>\n\n",data.temp);
-	fprintf(dialogue, "</body>\n\n</html>\n\n");
-  		
+	fprintf(dialogue, "</body>\n\n</html>\n\n");*/
+  	if (fichier != NULL) {
+        // Boucle de lecture des caractères un à un
+		do {
+			caractereActuel = fgetc(fichier); // On lit le caractère
+			fprintf(dialogue, "%c", caractereActuel); // On l'affiche
+		} while (caractereActuel != EOF); // On continue tant que fgetc n'a pas retourné EOF (fin de fichier)
+		 
+		fclose(fichier);
+	}
   	
 	
 	/* Termine la connexion */
@@ -103,7 +116,7 @@ int main(int argc,char *argv[])
 
 	//Initialisation du serveur 
 	int s_serveur=initialisationServeur(service);
-    int s_serveur_udp=initialisationSocketUDP("1024");
+    int s_serveur_udp=initialisationSocketUDP("124");
 	
     //Lancement de la boucle d'ecoute
 	lanceThread(wrapper_serveurMessages, (void *)&s_serveur_udp, 555555);
