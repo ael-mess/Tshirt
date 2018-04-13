@@ -17,3 +17,13 @@ int envoiMessage(char * service, char *message, int taille);
 int envoiMessageUnicast(char * service, char * machine, char *message, int taille);
 
 int lanceThread(void *(*thread)(void *), void *arg, int taille); // à enlever
+
+typedef struct
+{
+		int id;
+		int x;
+		int y;
+		int z;
+		int temp;
+} DATA;
+extern DATA data;

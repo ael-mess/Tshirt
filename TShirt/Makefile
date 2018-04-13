@@ -10,7 +10,7 @@ LDFLAGS = $(FLAGS)
 DUDE = avrdude
 PROTOCOL = stk500v1	# stk500 / stk500v1
 SPEED = 57600	# 57600 / 115200
-SERIAL = /dev/ttyUSB0	# ttyUSB0 / ttyACM0
+SERIAL = /dev/ttyUSB1	# ttyUSB / ttyACM0
 
 TARGET = broadcast
 SOURCES = $(wildcard *.c)

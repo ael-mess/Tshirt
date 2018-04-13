@@ -5,6 +5,7 @@
 
 #include "serial.h"
 #include "analog.h"
+#include "network.h"
 
 #define MAC_SIZE	6
 #define IPV4_SIZE	4
@@ -46,59 +47,10 @@ char hip[20]={
 char hudp[8]={
     0x04,0x00, // Port source
     0x04,0x00, // Port destination
-    0x00,len_udp, // Longueur
+    0x00,0x0D, // Longueur
     0x00,0x00 // Somme de contrôle
 };
 
-void trame_slip(char hip[20], char hudp[8], char data[5]) //envoi de la trame avec protocole SLIP
-{
-    int i;
-    for(i=0;i<33;i++)
-    {
-        if(i<20) {                                   //envoi ip sur le port serie
-            if (hip[i] == 0xC0) {
-                send_serial(0xDB); //ESC
-                send_serial(0xDC); //ESC_END
-            }
-            else if (hip[i] == 0xDB) {
-                send_serial(0xDB); //ESC
-                send_serial(0xDD); //ESC_ESC
-            }
-            else {
-                send_serial(hip[i]);
-            }
-        }
-        
-        else if(i<28 && i>19) {                     //envoi udp sur le port serie
-            if (hudp[i-20] == 0xC0) {
-                send_serial(0xDB); //ESC
-                send_serial(0xDC); //ESC_END
-            }
-            else if (hudp[i-20] == 0xDB) {
-                send_serial(0xDB); //ESC
-                send_serial(0xDD); //ESC_ESC
-            }
-            else {
-                send_serial(hudp[i-20]);
-            }
-        }
-        
-        else {                                      //envoi des data sur le port serie
-            if (data[i-28] == 0xC0) {
-                send_serial(0xDB); //ESC
-                send_serial(0xDC); //ESC_END
-            }
-            else if (data[i-28] == 0xDB) {
-                send_serial(0xDB); //ESC
-                send_serial(0xDD); //ESC_ESC
-            }
-            else {
-                send_serial(data[i-28]);
-            }
-        }
-    }
-    send_serial(0xC0);                              //E.N.D SLIP
-}
 
 int main(void)
 {

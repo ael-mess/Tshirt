@@ -33,6 +33,10 @@
 /**** Variables globales *****/
 int s_serveur_udp;
 
+
+DATA data;
+
+
 /**** Prototype des fonctions locales *****/
 
 /**** Fonctions de gestion des sockets ****/
@@ -140,9 +144,18 @@ int serveurMessages(int s, void *(*traitement)(void *))
         struct sockaddr_storage adresse;
         socklen_t taille=sizeof(adresse);
         unsigned char message[1500];
+        unsigned char strH[11];
         int nboctets=recvfrom(s,message,1500,0,(struct sockaddr *) &adresse,&taille);
         if(nboctets<0) return -1;
-        if(lanceThread(traitement, (void *) message,50)<0) break;
+    	memset(strH,0,sizeof(strH));
+    	int i,j;
+        for(i=0,j=0;i<5;i++,j+=2)
+		{
+		    sprintf((char*)strH+j,"%02X",message[i]); //Conversion de la data en hexa
+		}
+		strH[j]='\0'; /*adding NULL in the end*/
+        
+        if(lanceThread(traitement, (void *) strH,50)<0) break;
         printf("udp sever loop %d\n", s);
 
         char host[NI_MAXHOST], service[NI_MAXSERV];
@@ -207,6 +220,14 @@ int envoiMessageUnicast(char * service, char * machine, char *message, int taill
 void *traitement(void *message)
 {
     unsigned char * msg = (unsigned char *) message;
-    printf("traitement %s\n", msg);
+    //unsigned char strH[200];
+    int i,j;
+    //memset(strH,0,sizeof(strH));
+    printf("transmitted message is : %s\n",msg);
+    data.id=((msg[0]-48)*10+msg[1]-48);
+    data.x=((msg[2]-48)*10+msg[3]-48);
+    data.y=((msg[4]-48)*10+msg[5]-48);
+    data.z=((msg[6]-48)*10+msg[7]-48);
+    data.temp=((msg[8]-48)*10+msg[9]-48);
     return 0;
 }

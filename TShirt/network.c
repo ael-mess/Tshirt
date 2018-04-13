@@ -2,9 +2,11 @@
 
 #include <avr/io.h>
 #include <stdio.h>
-#include <stbool.h>
+#include <stdbool.h>
+#include "serial.h"
+#include "analog.h"
 
-#include "network.h"
+//#include "network.h"
 
 void trame_slip(char hip[20], char hudp[8], char data[5]) //envoi de la trame avec protocole SLIP
 {
@@ -55,7 +57,7 @@ void trame_slip(char hip[20], char hudp[8], char data[5]) //envoi de la trame av
     }
     send_serial(0xC0);                              //E.N.D SLIP
 }
-
+/*
 uint16_t ip_checksum(void* vdata, size_t length) {
     // Cast the data pointer to one that can be indexed.
     char* data=(char*)vdata;
@@ -86,7 +88,7 @@ uint16_t ip_checksum(void* vdata, size_t length) {
     // Return the checksum in network byte order.
     return htons(~acc);
 }
-
+*/
 /*uint16_t checksum_udp(uint16_t len_udp, uint16_t src_addr[],uint16_t dest_addr[], bool padding, uint16_t buff[])
 {
     uint16_t prot_udp=17;
