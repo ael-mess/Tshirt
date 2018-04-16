@@ -7,6 +7,20 @@
 /** Constantes **/
 
 /** Structures **/
+typedef struct
+{
+    int id;
+    int x;
+    int y;
+    int z;
+    int temp;
+} DATA;
+
+typedef struct
+{
+    DATA data[7];
+    int fin;
+} DATAlist;
 
 /** Variables publiques  **/
 int gestionClient(int s);

@@ -33,10 +33,6 @@
 /**** Variables globales *****/
 int s_serveur_udp;
 
-
-DATA data;
-
-
 /**** Prototype des fonctions locales *****/
 
 /**** Fonctions de gestion des sockets ****/
@@ -154,7 +150,8 @@ int serveurMessages(int s, void *(*traitement)(void *))
 		    sprintf((char*)strH+j,"%02X",message[i]); //Conversion de la data en hexa
 		}
 		strH[j]='\0'; /*adding NULL in the end*/
-        
+		printf("mess %s, tait %s\n",message, strH);
+
         if(lanceThread(traitement, (void *) strH,50)<0) break;
         printf("udp sever loop %d\n", s);
 
@@ -213,33 +210,5 @@ int envoiMessageUnicast(char * service, char * machine, char *message, int taill
 
     if(sendto(s_serveur_udp,(const char *)message,strlen((const char *)message),0,(struct sockaddr *)resultat->ai_addr,resultat->ai_addrlen) <0)
 		perror("envoiMessage.sendto");
-    return 0;
-}
-
-int HexToInt(char a)
-{
-	//printf("%d\n",a);
-	if(a<58) {
-		return a-48;
-	}
-	else {
-		return a-55;
-	}
-	return 0;
-}
-
-void *traitement(void *message)
-{
-    unsigned char * msg = (unsigned char *) message;
-    //unsigned char strH[200];
-    int i,j;
-    //memset(strH,0,sizeof(strH));
-    printf("transmitted message is : %s\n",msg);
-    
-	data.id=HexToInt(msg[0])*16+HexToInt(msg[1]);
-	data.x=HexToInt(msg[2])*16+HexToInt(msg[3]);
-	data.y=HexToInt(msg[4])*16+HexToInt(msg[5]);
-    data.z=HexToInt(msg[6])*16+HexToInt(msg[7]);
-    data.temp=HexToInt(msg[8])*16+HexToInt(msg[9]);
     return 0;
 }
