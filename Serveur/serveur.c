@@ -70,7 +70,7 @@ void http(char page[MAX_BUFFER], FILE * out) {
     }
 }
 
-void h(FILE *out, int s){
+void h(FILE *out){
     char buffer[MAX_BUFFER];
     char cmd[MAX_BUFFER];
     char page[MAX_BUFFER];
@@ -80,13 +80,14 @@ void h(FILE *out, int s){
 
     if(fgets(buffer,MAX_BUFFER,out)==NULL) exit(-1);
     if(sscanf(buffer,"%s %s %s",cmd,page,proto)!=3) exit(-1);
+    printf("cmd = %s // page = %s // proto = %s\n",cmd,page,proto);
     while(fgets(buffer,MAX_BUFFER,out)!=NULL){
         if(strcmp(buffer,"\r\n")==0) break;
     }
     if(strcasecmp(cmd,"GET")==0){
         int code=CODE_OK;
         struct stat fstat;
-        sprintf(path,"%s",page);
+        sprintf(path,".%s",page);
         system("ls");
         printf(" %d\n",stat(path,&fstat));
         if(stat(path,&fstat)!=0 || !S_ISREG(fstat.st_mode)){
@@ -105,12 +106,11 @@ void h(FILE *out, int s){
         fprintf(out,"\r\n");
         fflush(out);
         printf("page %s, path %s\n", page, path);
-        int fd=open(path,O_RDONLY);
-        if(fd>=0){
-            int bytes;
-            while((bytes=read(fd,buffer,MAX_BUFFER))>0) write(1,buffer,bytes);
-            close(fd);
-        }
+        FILE *fd=fopen(path,"r");
+		if(fd!=NULL){
+		    while(fgets(buffer, fstat.st_size, fd)!=NULL) fputs(buffer,out);
+		    fclose(fd);
+		}
     }
 }
 
@@ -123,16 +123,17 @@ int gestionClient(int s)
 	if(dialogue==NULL){ perror("gestionClient.fdopen"); exit(EXIT_FAILURE); }
 
 	//http("Serveur/index.html", dialogue);
-    h(dialogue,s);
+    h(dialogue);
     /*sleep(5);
-	/*http("Serveur/index.html", dialogue);
+	//http("Serveur/index.html", dialogue);*/
     char buffer[MAX_BUFFER];
-    while(fgets(buffer, 1024, dialogue)!=NULL) {
-        if(strcmp(buffer,"GET /Serveur/valeurs.html HTTP/1.1\r\n")==0) {
+    /*while(fgets(buffer, 1024, dialogue)!=NULL) {
+        /*if(strcmp(buffer,"GET /Serveur/valeurs.html HTTP/1.1\r\n")==0) {
             printf("%s\n",buffer);
             http("Serveur/valeurs.html", dialogue);
             break;
         }
+        puts(buffer);
     }*/
 	
 	/* Termine la connexion */
