@@ -43,45 +43,100 @@ sem_t s_fichier;
 
 /** Procedure principale **/
 
+void http(char page[MAX_BUFFER], FILE * out) {
+    char buffer[MAX_BUFFER];
+    char path[MAX_BUFFER];
+    char type[MAX_BUFFER];
+
+    memset(buffer,0,MAX_BUFFER);
+    int code=CODE_OK;
+    struct stat fstat;
+    sprintf(path,"%s",page);
+    if(stat(path,&fstat)!=0 || !S_ISREG(fstat.st_mode)){
+        sprintf(path,"%s/%s",WEB_DIR,PAGE_NOTFOUND);
+        code=CODE_NOTFOUND;
+    }
+    strcpy(type,"text/html");
+    fprintf(out,"HTTP/1.0 %d OK\r\n",CODE_OK);
+    fprintf(out,"Server: CWeb\r\n");
+    fprintf(out,"Content-type: %s\r\n",type);
+    fprintf(out,"Content-length: %lld\r\n",fstat.st_size);
+    fprintf(out,"\r\n");
+    fflush(out);
+    FILE *fd=fopen(path,"r");
+    if(fd!=NULL){
+        while(fgets(buffer, fstat.st_size, fd)!=NULL) fputs(buffer,out);
+        fclose(fd);
+    }
+}
+
+void h(FILE *out, int s){
+    char buffer[MAX_BUFFER];
+    char cmd[MAX_BUFFER];
+    char page[MAX_BUFFER];
+    char proto[MAX_BUFFER];
+    char path[MAX_BUFFER];
+    char type[MAX_BUFFER];
+
+    if(fgets(buffer,MAX_BUFFER,out)==NULL) exit(-1);
+    if(sscanf(buffer,"%s %s %s",cmd,page,proto)!=3) exit(-1);
+    while(fgets(buffer,MAX_BUFFER,out)!=NULL){
+        if(strcmp(buffer,"\r\n")==0) break;
+    }
+    if(strcasecmp(cmd,"GET")==0){
+        int code=CODE_OK;
+        struct stat fstat;
+        sprintf(path,"%s",page);
+        system("ls");
+        printf(" %d\n",stat(path,&fstat));
+        if(stat(path,&fstat)!=0 || !S_ISREG(fstat.st_mode)){
+            sprintf(path,"%s/%s",WEB_DIR,PAGE_NOTFOUND);
+            code=CODE_NOTFOUND;
+        }
+        strcpy(type,"text/html");
+        char *end=page+strlen(page);
+        if(strcmp(end-4,".png")==0) strcpy(type,"image/png");
+        if(strcmp(end-4,".jpg")==0) strcpy(type,"image/jpg");
+        if(strcmp(end-4,".gif")==0) strcpy(type,"image/gif");
+        fprintf(out,"HTTP/1.0 %d\r\n",code);
+        fprintf(out,"Server: CWeb\r\n");
+        fprintf(out,"Content-type: %s\r\n",type);
+        fprintf(out,"Content-length: %d\r\n",fstat.st_size);
+        fprintf(out,"\r\n");
+        fflush(out);
+        printf("page %s, path %s\n", page, path);
+        int fd=open(path,O_RDONLY);
+        if(fd>=0){
+            int bytes;
+            while((bytes=read(fd,buffer,MAX_BUFFER))>0) write(1,buffer,bytes);
+            close(fd);
+        }
+    }
+}
+
 int gestionClient(int s)
 {
     sem_wait(&s_fichier);
-	FILE* fichier = NULL;
-	fichier = fopen("Serveur/index.html", "r");
-	if(fichier==NULL){ perror("gestionClient.fdopen"); exit(EXIT_FAILURE); }
-	int caractereActuel = 0;
-	
     printf("function %d\n", s);
 	/* Obtient une structure de fichier */
 	FILE *dialogue=fdopen(s,"a+");
 	if(dialogue==NULL){ perror("gestionClient.fdopen"); exit(EXIT_FAILURE); }
 
-	fprintf(dialogue, "HTTP/1.1 200 OK\n");
-	//fprintf(dialogue, "Content-length: 146\n");
-	fprintf(dialogue, "Content-Type: text/html\n\n");
-	fprintf(dialogue, "<html>\n<title>Tshirt</title>\n<body>\n");
-	fprintf(dialogue, "<h1>Tshirt values :</h1>\n\n");
-    fprintf(dialogue, "<p><a href=\"index.html\"><input type=\"submit\" value=\"Graph!\"></a></p>");
-	fprintf(dialogue, "<p>id : %d</p>\n\n",data.data[data.fin].id);
-	fprintf(dialogue, "<p>acc x : %d</p>\n\n",data.data[data.fin].x);
-	fprintf(dialogue, "<p>acc y : %d</p>\n\n",data.data[data.fin].y);
-	fprintf(dialogue, "<p>acc z : %d</p>\n\n",data.data[data.fin].z);
-	fprintf(dialogue, "<p>temp : %d</p>\n\n",data.data[data.fin].temp);
-	fprintf(dialogue, "</body>\n\n</html>\n\n");
-  	/*if (fichier != NULL) {
-        // Boucle de lecture des caractères un à un
-		do {
-			caractereActuel = fgetc(fichier); // On lit le caractère
-			fprintf(dialogue, "%c", caractereActuel); // On l'affiche
-		} while (caractereActuel != EOF); // On continue tant que fgetc n'a pas retourné EOF (fin de fichier)
-		 
-		fclose(fichier);
-	}*/
-  	
+	//http("Serveur/index.html", dialogue);
+    h(dialogue,s);
+    /*sleep(5);
+	/*http("Serveur/index.html", dialogue);
+    char buffer[MAX_BUFFER];
+    while(fgets(buffer, 1024, dialogue)!=NULL) {
+        if(strcmp(buffer,"GET /Serveur/valeurs.html HTTP/1.1\r\n")==0) {
+            printf("%s\n",buffer);
+            http("Serveur/valeurs.html", dialogue);
+            break;
+        }
+    }*/
 	
 	/* Termine la connexion */
 	fclose(dialogue);
-    fclose(fichier);
     sem_post(&s_fichier);
 
     return 0;
