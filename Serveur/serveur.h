@@ -27,3 +27,8 @@ int gestionClient(int s);
 void *wrapper_gestionClient(void *arg);
 char *analyseArguments(int argc, char *argv[]);
 void http(FILE *out);
+void values();
+void graph();
+void enre_valeur(DATA d);
+int HexToInt(char a);
+void *traitementUDP(void *message);

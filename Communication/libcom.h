@@ -13,7 +13,6 @@ int boucleServeur(int s,void *(*traitement)(void *));
 void *traitementUDP(void *message);
 int serveurMessages(int s,void *(*traitement)(void *));
 int initialisationSocketUDP(char *service);
-int envoiMessage(char * service, char *message, int taille);
-int envoiMessageUnicast(char * service, char * machine, char *message, int taille);
-
-int lanceThread(void *(*thread)(void *), void *arg, int taille); // à enlever
+int envoiMessage(char * service, char *message);
+int envoiMessageUnicast(char * service, char * machine, char *message);
+int lanceThread(void *(*thread)(void *), void *arg);

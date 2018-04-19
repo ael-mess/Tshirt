@@ -28,7 +28,9 @@
 
 /**** Constantes ****/
 
-#define MAX_TAMPON	1024
+#define MAX_TAMPON 1024
+#define MAX_UDP 1500
+#define MAX_CLIENT 50
 
 /**** Variables globales *****/
 int s_serveur_udp;
@@ -77,12 +79,13 @@ int initialisationServeur(char *service)
     freeaddrinfo(origine);
 
     /* Taille de la queue d'attente */
-    statut=listen(s,50);
+    statut=listen(s,MAX_CLIENT);
     if(statut<0) return -1;
 
     return s;
 }
 
+//boucle serveur tcp
 int boucleServeur(int s,void *(*traitement)(void *))
 {
     int dialogue;
@@ -92,8 +95,7 @@ int boucleServeur(int s,void *(*traitement)(void *))
         if((dialogue=accept(s,NULL,NULL))<0) return -1;
 
         /* Passage de la socket de dialogue a la fonction de traitement */
-        if(lanceThread(traitement, (void *)&dialogue,50)<0){ shutdown(s,SHUT_RDWR); return 0;}
-        printf("tcp sever loop :%d\n", s);
+        if(lanceThread(traitement, (void *)&dialogue)<0){ shutdown(s,SHUT_RDWR); return 0;}
     }
 }
 
@@ -133,23 +135,23 @@ int initialisationSocketUDP(char *service){
     return s_serveur_udp;
 }
 
+//reception message udp
 int serveurMessages(int s, void *(*traitement)(void *))
 {
     while(1){
         struct sockaddr_storage adresse;
         socklen_t taille=sizeof(adresse);
-        unsigned char message[1500];
-        int nboctets=recvfrom(s,message,1500,0,(struct sockaddr *) &adresse,&taille);
+        unsigned char message[MAX_UDP];
+        int nboctets=recvfrom(s,message,MAX_UDP,0,(struct sockaddr *) &adresse,&taille);
         if(nboctets<0) return -1;
 
-        if(lanceThread(traitement, (void *) message,50)<0) break;
-        printf("udp sever loop %d\n", s);
+        if(lanceThread(traitement, (void *) message)<0) break;
 
         char host[NI_MAXHOST], service[NI_MAXSERV];
         int ser = getnameinfo((struct sockaddr *) &adresse, taille, host, NI_MAXHOST, service, NI_MAXSERV, NI_NUMERICSERV);
 
         if (ser == 0) {
-            printf("Received %ld bytes from %s:%s\n", (long) nboctets, host, service);
+            printf("Received %ld bytes from %s:%s\n (udp)", (long) nboctets, host, service);
             char messrec[32] = "reçu frère\n";
             if(sizeof(messrec)!=sendto(s,messrec,sizeof(messrec),0,(struct sockaddr *) &adresse,taille)) perror("serveurMessages.sendto");
         }
@@ -158,16 +160,13 @@ int serveurMessages(int s, void *(*traitement)(void *))
     return 0;
 }
 
-int envoiMessage(char * service, char *message, int taille)
+int envoiMessage(char * service, char *message)
 {
-	printf("après boucle\n");
     struct sockaddr_in adresse;
     memset(&adresse,0,sizeof(adresse));
     adresse.sin_family = AF_INET;
     adresse.sin_addr.s_addr = inet_addr("INADDR_BROADCAST");
     adresse.sin_port=htons(atoi(service));
-
-	printf("sfd : %d\n", s_serveur_udp);
 
     int vrai=1;
     if(setsockopt(s_serveur_udp,SOL_SOCKET,SO_BROADCAST,&vrai,sizeof(vrai))<0){
@@ -177,10 +176,11 @@ int envoiMessage(char * service, char *message, int taille)
 
     if(sendto(s_serveur_udp,(const char *)message,strlen((const char *)message),0,(struct sockaddr *)&adresse,sizeof(adresse)) <0)
 		perror("envoiMessage.sendto");
+    printf("Message sent BROADCAST %s\n (udp)", message);
     return 0;
 }
 
-int envoiMessageUnicast(char * service, char * machine, char *message, int taille)
+int envoiMessageUnicast(char * service, char * machine, char *message)
 {
 	struct addrinfo precisions,*resultat,*origine;
 
@@ -196,5 +196,6 @@ int envoiMessageUnicast(char * service, char * machine, char *message, int taill
 
     if(sendto(s_serveur_udp,(const char *)message,strlen((const char *)message),0,(struct sockaddr *)resultat->ai_addr,resultat->ai_addrlen) <0)
 		perror("envoiMessage.sendto");
+    printf("Message sent to %s : %s\n (udp)", machine, message);
     return 0;
 }

@@ -2,7 +2,7 @@
 # Makefile pour generer le serveur 
 #
 
-OBJS = serveur.o http.o
+OBJS = serveur.o http.o capteur.o
 LIBS = -lpthread
 LOCAL_LIBS  = -L ../Communication  -L ../Threads
 LOCAL_LIBS += -lcom -lthrd
@@ -28,5 +28,6 @@ clean:
 serveur: $(OBJS)
 	$(CC) $(CFLAGS) -o serveur $(OBJS) $(LOCAL_LIBS) $(LIBS)
 
-serveur.o: serveur.c serveur.h
-http.o : http.c
+http.o : http.c serveur.h
+capteur.o : capteur.c serveur.h
+serveur.o: serveur.c serveur.h 
