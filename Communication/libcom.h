@@ -10,7 +10,7 @@
 /**** Fonctions ****/
 int initialisationServeur(char *service);
 int boucleServeur(int s,void *(*traitement)(void *));
-void *traitement(void *message);
+void *traitementUDP(void *message);
 int serveurMessages(int s,void *(*traitement)(void *));
 int initialisationSocketUDP(char *service);
 int envoiMessage(char * service, char *message, int taille);

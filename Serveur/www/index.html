@@ -1,39 +1,63 @@
+
 <!DOCTYPE html>
-
 <html>
- <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <title>Tshirt</title>
-    <link href="layout.css" rel="stylesheet" type="text/css">
-    <!--[if lte IE 8]><script language="javascript" type="text/javascript" src="../excanvas.min.js"></script><![endif]-->
-    <script language="javascript" type="text/javascript" src="jquery.js"></script>
-    <script language="javascript" type="text/javascript" src="jquery.flot.js"></script>
- </head>
+    <head>
+        
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>Tshirt</title>
+        <link href="layout.css" rel="stylesheet" type="text/css">
+        <script language="javascript" type="text/javascript" src="jquery.js"></script>
+        
+        <style>
+            div.container {
+                width: 100%;
+                border: 1px solid gray;
+            }
+        
+        header, footer {
+            padding: 1em;
+            color: white;
+            background-color: black;
+            clear: left;
+            text-align: center;
+        }
+        
+        nav {
+            float: left;
+            max-width: 160px;
+            margin: 0;
+            padding: 1em;
+        }
+        
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        
+        nav ul a {
+            text-decoration: none;
+        }
+        </style>
+    </head>
     <body>
-    <h1>Tshirt values</h1>
-
-    <p>Simple example. You don't need to specify much to get an
-       attractive look. Put in a placeholder, make sure you set its
-       dimensions (otherwise the plot library will barf) and call the
-       plot function with the data. The axes are automatically
-       scaled.</p>
-
-    <div id="placeholder" style="width:600px;height:300px;"></div>
-
-<script type="text/javascript">
-$(function () {
-    var d1 = [];
-    for (var i = 0; i < 14; i += 0.5)
-        d1.push([i, Math.sin(i)]);
-
-    var d2 = [[0, 3], [4, 8], [8, 5], [9, 13]];
-
-    // a null signifies separate line segments
-    var d3 = [[0, 12], [7, 12], null, [7, 2.5], [12, 2.5]];
-    
-    $.plot($("#placeholder"), [ d1, d2, d3 ]);
-});
-</script>
-
- </body>
+        
+        <div class="container">
+            
+            <header>
+                <h1>Projet PSR Tshirt</h1>
+            </header>
+            
+            <nav>
+                <ul>
+                    <li><a href="graph.html"><input type="submit" value="Graph!"></a></li>
+                    <li><a href="valeurs.html"><input type="submit" value="Valeurs!"></a></li>
+                </ul>
+            </nav>
+            
+            <footer>Amine-ElMessaoudi Thibault-Cattelain</footer>
+            
+        </div>
+        
+    </body>
 </html>
+

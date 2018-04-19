@@ -26,7 +26,7 @@ void trame_slip(char hip[20], char hudp[8], char data[5]) //envoi de la trame av
                 send_serial(hip[i]);
             }
         }
-        
+
         else if(i<28 && i>19) {                     //envoi udp sur le port serie
             if (hudp[i-20] == 0xC0) {
                 send_serial(0xDB); //ESC
@@ -40,7 +40,7 @@ void trame_slip(char hip[20], char hudp[8], char data[5]) //envoi de la trame av
                 send_serial(hudp[i-20]);
             }
         }
-        
+
         else {                                      //envoi des data sur le port serie
             if (data[i-28] == 0xC0) {
                 send_serial(0xDB); //ESC

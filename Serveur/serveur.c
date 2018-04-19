@@ -15,16 +15,6 @@
 #include <semaphore.h>
 
 
-/** Some constants **/
-
-#define WEB_DIR  "./www"
-#define PAGE_NOTFOUND "error.html"
-#define PAGE1 "page1.html"
-#define MAX_BUFFER 1024
-
-#define CODE_OK  200
-#define CODE_NOTFOUND 404
-
 /***********************************************************/
 /** Serveur pour le serveur                               **/
 /***********************************************************/
@@ -37,108 +27,117 @@
 extern char *optarg;
 extern int optind, opterr, optopt;
 DATAlist data;
-sem_t s_fichier;
+sem_t s_log, s_html;
 
 /** Variables statiques **/
 
 /** Procedure principale **/
 
-void http(char page[MAX_BUFFER], FILE * out) {
-    char buffer[MAX_BUFFER];
-    char path[MAX_BUFFER];
-    char type[MAX_BUFFER];
-
-    memset(buffer,0,MAX_BUFFER);
-    int code=CODE_OK;
-    struct stat fstat;
-    sprintf(path,"%s",page);
-    if(stat(path,&fstat)!=0 || !S_ISREG(fstat.st_mode)){
-        sprintf(path,"%s/%s",WEB_DIR,PAGE_NOTFOUND);
-        code=CODE_NOTFOUND;
-    }
-    strcpy(type,"text/html");
-    fprintf(out,"HTTP/1.0 %d OK\r\n",CODE_OK);
-    fprintf(out,"Server: CWeb\r\n");
-    fprintf(out,"Content-type: %s\r\n",type);
-    fprintf(out,"Content-length: %lld\r\n",fstat.st_size);
-    fprintf(out,"\r\n");
-    fflush(out);
-    FILE *fd=fopen(path,"r");
-    if(fd!=NULL){
-        while(fgets(buffer, fstat.st_size, fd)!=NULL) fputs(buffer,out);
-        fclose(fd);
+void values() {
+    FILE * val = fopen("Serveur/www/valeurs.html", "w");
+    FILE * ge = fopen("Serveur/www/valeurs_ge.html", "r");
+    if(val!=NULL || ge!=NULL) {
+        int i = 0;
+        char c = fgetc(ge);
+        while(c!=EOF) {
+            if(c=='%' && i==0) { fputc(data.data[data.fin].id +48, val); i++; }
+            else if(c=='%' && i==1) { fputc(data.data[data.fin].x +48, val); i++; }
+            else if(c=='%' && i==2) { fputc(data.data[data.fin].y +48, val); i++; }
+            else if(c=='%' && i==3) { fputc(data.data[data.fin].z + 48, val); i++; }
+            else if(c=='%' && i==4) { fputc(data.data[data.fin].temp +48, val); i=0; }
+            else fputc(c,val);
+            c = fgetc(ge);
+        }
+        fclose(ge);
+        fclose(val);
     }
 }
 
-void h(FILE *out){
-    char buffer[MAX_BUFFER];
-    char cmd[MAX_BUFFER];
-    char page[MAX_BUFFER];
-    char proto[MAX_BUFFER];
-    char path[MAX_BUFFER];
-    char type[MAX_BUFFER];
+void graph() {
+    FILE * val = fopen("Serveur/www/graph.html", "w");
+    FILE * ge = fopen("Serveur/www/graph_ge.html", "r");
 
-    if(fgets(buffer,MAX_BUFFER,out)==NULL) exit(-1);
-    if(sscanf(buffer,"%s %s %s",cmd,page,proto)!=3) exit(-1);
-    printf("cmd = %s // page = %s // proto = %s\n",cmd,page,proto);
-    while(fgets(buffer,MAX_BUFFER,out)!=NULL){
-        if(strcmp(buffer,"\r\n")==0) break;
-    }
-    if(strcasecmp(cmd,"GET")==0){
-        int code=CODE_OK;
-        struct stat fstat;
-        sprintf(path,".%s",page);
-        system("ls");
-        printf(" %d\n",stat(path,&fstat));
-        if(stat(path,&fstat)!=0 || !S_ISREG(fstat.st_mode)){
-            sprintf(path,"%s/%s",WEB_DIR,PAGE_NOTFOUND);
-            code=CODE_NOTFOUND;
+    FILE * accx = fopen("Serveur/log/accx.log", "rb");
+    FILE * accy = fopen("Serveur/log/accy.log", "rb");
+    FILE * accz = fopen("Serveur/log/accz.log", "rb");
+    FILE * temp = fopen("Serveur/log/temp.log", "rb");
+
+    if(val!=NULL && ge!=NULL && accx!=NULL && accy!=NULL && accz!=NULL && temp!=NULL) {
+        int j=0, i=0;
+        DATA d;
+        char c = fgetc(ge);
+
+        while(c!=EOF) {
+            if(c=='%' && i==0) {
+                j=0;
+                while(fscanf(accx,"%d %d", &d.id, &d.x)!=EOF) {
+                    fprintf(val,"[%d,%d],",j,d.x);
+                    j++;
+                }
+                i++;
+            }
+            else if(c=='%' && i==1) {
+                j=0;
+                while(fscanf(accy,"%d %d", &d.id, &d.y)!=EOF) {
+                    fprintf(val,"[%d,%d],",j,d.y);
+                    j++;
+                }
+                i++;
+            }
+            else if(c=='%' && i==2) {
+                j=0;
+                while(fscanf(accz,"%d %d", &d.id, &d.z)!=EOF) {
+                    fprintf(val,"[%d,%d],",j,d.z);
+                    j++;
+                }
+                i++;
+            }
+            else if(c=='%' && i==3) {
+                j=0;
+                while(fscanf(temp,"%d %d", &d.id, &d.temp)!=EOF) {
+                    fprintf(val,"[%d,%d],",j,d.temp);
+                    j++;
+                }
+                i++;
+            }
+            else if(c=='%' && i==4) { fprintf(val, "%d", d.id); i=0; }
+            else fputc(c,val);
+            c = fgetc(ge);
         }
-        strcpy(type,"text/html");
-        char *end=page+strlen(page);
-        if(strcmp(end-4,".png")==0) strcpy(type,"image/png");
-        if(strcmp(end-4,".jpg")==0) strcpy(type,"image/jpg");
-        if(strcmp(end-4,".gif")==0) strcpy(type,"image/gif");
-        fprintf(out,"HTTP/1.0 %d\r\n",code);
-        fprintf(out,"Server: CWeb\r\n");
-        fprintf(out,"Content-type: %s\r\n",type);
-        fprintf(out,"Content-length: %d\r\n",fstat.st_size);
-        fprintf(out,"\r\n");
-        fflush(out);
-        printf("page %s, path %s\n", page, path);
-        FILE *fd=fopen(path,"r");
-		if(fd!=NULL){
-		    while(fgets(buffer, fstat.st_size, fd)!=NULL) fputs(buffer,out);
-		    fclose(fd);
-		}
+        fclose(ge);
+        fclose(val);
+        fclose(accx);
+        fclose(accy);
+        fclose(accz);
+        fclose(temp);
     }
 }
 
 int gestionClient(int s)
 {
-    sem_wait(&s_fichier);
+    
     printf("function %d\n", s);
 	/* Obtient une structure de fichier */
 	FILE *dialogue=fdopen(s,"a+");
 	if(dialogue==NULL){ perror("gestionClient.fdopen"); exit(EXIT_FAILURE); }
 
-	//http("Serveur/index.html", dialogue);
-    h(dialogue);
-    /*sleep(5);
-	//http("Serveur/index.html", dialogue);*/
-    char buffer[MAX_BUFFER];
-    /*while(fgets(buffer, 1024, dialogue)!=NULL) {
-        /*if(strcmp(buffer,"GET /Serveur/valeurs.html HTTP/1.1\r\n")==0) {
-            printf("%s\n",buffer);
-            http("Serveur/valeurs.html", dialogue);
-            break;
-        }
-        puts(buffer);
-    }*/
+	sem_wait(&s_html);
+	values();
+    sem_wait(&s_log);
+    graph();
+    sem_post(&s_log);
+    sem_post(&s_html);
+
+    printf("before http \n");
+    sem_wait(&s_html);
+    http(dialogue);
+    sem_post(&s_html);
+    printf("after http \n");
+    char buffer[1024];
+    while(fgets(buffer, 1024, dialogue)!=NULL) puts(buffer);
 	
 	/* Termine la connexion */
 	fclose(dialogue);
-    sem_post(&s_fichier);
 
     return 0;
 }
@@ -157,45 +156,71 @@ void *wrapper_serveurMessages(void *arg)
 	int s = *((int *) (arg));
 
 	printf("coucou\n");
-	int statut = serveurMessages(s, traitement);
+	int statut = serveurMessages(s, traitementUDP);
 	if(statut!=0) { perror("serveurMessages.wrapper"); exit(EXIT_FAILURE); }
 	return NULL;
 }
 
+void struct_valeur(DATA d) {
+    int i, bool=0;
+    for(i=0; i<data.fin; i++) {
+        if(data.data[i].id == d.id) {
+            data.data[i].x = d.x;
+            data.data[i].y = d.y;
+            data.data[i].z = d.z;
+            data.data[i].temp = d.temp;
+            bool++;
+        }
+    }
+    if(bool==0) {
+        data.fin++;
+        data.data[data.fin].x = d.x;
+        data.data[data.fin].y = d.y;
+        data.data[data.fin].z = d.z;
+        data.data[data.fin].temp = d.temp;
+    }
+}
+
 int HexToInt(char a)
 {
-	//printf("%d\n",a);
 	if(a<58) return a-48;
 	else return a-55;
 }
 
-void *traitement(void *message)
+void *traitementUDP(void *message)
 {
-    sem_wait(&s_fichier);
     unsigned char * msg = (unsigned char *) message;
-    FILE * acc = fopen("Serveur/acceleration.txt", "ab");
-    FILE * temp = fopen("Serveur/temperature.txt", "ab");
-    FILE * cap = fopen("Serveur/capteurs.txt", "ab");
-    //unsigned char strH[200];
-    //memset(strH,0,sizeof(strH));
-    printf("transmitted message is : %s\n",msg);
+    unsigned char strH[11];
+    memset(strH,0,sizeof(strH));
+    int i,j;
+    for(i=0,j=0;i<5;i++,j+=2) sprintf((char*)strH+j,"%02X",msg[i]); //Conversion de la data en hexa
+    strH[j]='\0'; //adding NULL in the end
 
-    data.fin++;
-	data.data[data.fin].id=HexToInt(msg[0])*16+HexToInt(msg[1]);
-    fprintf(cap, "%d (%d)acceleration température\n",data.fin, data.data[data.fin].id);
-	data.data[data.fin].x=HexToInt(msg[2])*16+HexToInt(msg[3]);
-    fprintf(acc, "%d ",data.data[data.fin].x);
-	data.data[data.fin].y=HexToInt(msg[4])*16+HexToInt(msg[5]);
-    fprintf(acc, "%d ",data.data[data.fin].y);
-    data.data[data.fin].z=HexToInt(msg[6])*16+HexToInt(msg[7]);
-    fprintf(acc, "%d\n",data.data[data.fin].z);
-    data.data[data.fin].temp=HexToInt(msg[8])*16+HexToInt(msg[9]);
-    fprintf(temp, "%d\n",data.data[data.fin].temp);
+    DATA d;
+	d.id=HexToInt(strH[0])*16+HexToInt(strH[1]);
+	d.x=HexToInt(strH[2])*16+HexToInt(strH[3]);
+	d.y=HexToInt(strH[4])*16+HexToInt(strH[5]);
+    d.z=HexToInt(strH[6])*16+HexToInt(strH[7]);
+    d.temp=HexToInt(strH[8])*16+HexToInt(strH[9]);
 
-    fclose(acc);
-    fclose(cap);
-    fclose(temp);
-    sem_post(&s_fichier);
+    struct_valeur(d);
+
+    sem_wait(&s_log);
+    FILE * accx = fopen("Serveur/log/accx.log", "ab");
+    FILE * accy = fopen("Serveur/log/accy.log", "ab");
+    FILE * accz = fopen("Serveur/log/accz.log", "ab");
+    FILE * temp = fopen("Serveur/log/temp.log", "ab");
+    if(accx!=NULL && accy!=NULL && accz!=NULL && temp!=NULL) {
+        fprintf(accx, "%d %d\n", d.id, d.x);
+        fprintf(accx, "%d %d\n", d.id, d.y);
+        fprintf(accx, "%d %d\n", d.id, d.z);
+        fprintf(accx, "%d %d\n", d.id, d.temp);
+        fclose(accx);
+        fclose(accy);
+        fclose(accz);
+        fclose(temp);
+    }
+    sem_post(&s_log);
     return 0;
 }
 
@@ -219,10 +244,12 @@ int main(int argc,char *argv[])
     data.fin=-1;
 	
     //Lancement de la boucle d'ecoute
-    sem_init(&s_fichier, 0, 1);
+    sem_init(&s_log, 0, 1);
+    sem_init(&s_html, 0, 1);
 	lanceThread(wrapper_serveurMessages, (void *)&s_serveur_udp, 555555);
 	boucleServeur(s_serveur, wrapper_gestionClient);
     close(s_serveur_udp);
-    sem_destroy(&s_fichier);
+    sem_destroy(&s_log);
+    sem_destroy(&s_html);
     return 0;
 }

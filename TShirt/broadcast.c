@@ -55,10 +55,9 @@ char hudp[8]={
 int main(void)
 {
     init_serial(9600);
-    
+
     while(1) 
     {
-        
         ad_init(0x0);
         data[1] = ad_sample(); // accX
         ad_init(0x1);
@@ -67,7 +66,7 @@ int main(void)
         data[3] = ad_sample(); //accZ
         ad_init(0x3);
         data[4] = ad_sample(); //temp
-        
+
         trame_slip(hip,hudp,data); //envoi trame slip
     }
     return 0;

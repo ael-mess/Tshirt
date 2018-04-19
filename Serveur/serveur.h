@@ -18,7 +18,7 @@ typedef struct
 
 typedef struct
 {
-    DATA data[7];
+    DATA data[1024];
     int fin;
 } DATAlist;
 
@@ -26,3 +26,4 @@ typedef struct
 int gestionClient(int s);
 void *wrapper_gestionClient(void *arg);
 char *analyseArguments(int argc, char *argv[]);
+void http(FILE *out);

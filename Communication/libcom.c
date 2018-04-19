@@ -135,24 +135,14 @@ int initialisationSocketUDP(char *service){
 
 int serveurMessages(int s, void *(*traitement)(void *))
 {
-	int i=0;
-    while(i<5){
+    while(1){
         struct sockaddr_storage adresse;
         socklen_t taille=sizeof(adresse);
         unsigned char message[1500];
-        unsigned char strH[11];
         int nboctets=recvfrom(s,message,1500,0,(struct sockaddr *) &adresse,&taille);
         if(nboctets<0) return -1;
-    	memset(strH,0,sizeof(strH));
-    	int i,j;
-        for(i=0,j=0;i<5;i++,j+=2)
-		{
-		    sprintf((char*)strH+j,"%02X",message[i]); //Conversion de la data en hexa
-		}
-		strH[j]='\0'; /*adding NULL in the end*/
-		printf("mess %s, tait %s\n",message, strH);
 
-        if(lanceThread(traitement, (void *) strH,50)<0) break;
+        if(lanceThread(traitement, (void *) message,50)<0) break;
         printf("udp sever loop %d\n", s);
 
         char host[NI_MAXHOST], service[NI_MAXSERV];
@@ -160,15 +150,11 @@ int serveurMessages(int s, void *(*traitement)(void *))
 
         if (ser == 0) {
             printf("Received %ld bytes from %s:%s\n", (long) nboctets, host, service);
-            char messrec[32] = "reçu gy-h_i frère\n";
+            char messrec[32] = "reçu frère\n";
             if(sizeof(messrec)!=sendto(s,messrec,sizeof(messrec),0,(struct sockaddr *) &adresse,taille)) perror("serveurMessages.sendto");
         }
         else perror("serveurMessages.getnameinfo");
-	
-	i++;
 	}
-	envoiMessage("4241", "	broadcasrt frere ", 5465);
-	envoiMessageUnicast("4241", "127.0.0.1", " 	unicast sdfgser", 54);
     return 0;
 }
 

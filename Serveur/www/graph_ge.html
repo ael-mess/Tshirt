@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+
+<html>
+ <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Tshirt</title>
+    <link href="layout.css" rel="stylesheet" type="text/css">
+    <!--[if lte IE 8]><script language="javascript" type="text/javascript" src="excanvas.min.js"></script><![endif]-->
+    <script language="javascript" type="text/javascript" src="jquery.js"></script>
+    <script language="javascript" type="text/javascript" src="jquery.flot.js"></script>
+    
+    <script type="text/javascript">
+        $(function() {
+          
+          var d1 = [%];
+          var d2 = [%];
+          var d3 = [%];
+          var d4 = [%];
+          
+          $.plot("#placeholder", [ d1, d2, d3, d4 ]);
+          });
+          
+    </script>
+ </head>
+    <body>
+        <div id="header">
+            <h2>TShirt graph</h2>
+        </div>
+
+    <p>id %</p>
+
+    <div id="placeholder" style="width:600px;height:300px;"></div>
+    
+    </body>
+</html>
