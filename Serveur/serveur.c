@@ -94,11 +94,11 @@ int main(int argc,char *argv[])
 	//Lecture des arguments de la commande 
 	char *service = analyseArguments(argc,argv);
     printf("service tcp :%s\n", service);
-    printf("service udp :1024\n");
+    printf("service udp :4000\n");
 
 	//Initialisation du serveur 
 	int s_serveur=initialisationServeur(service);
-    int s_serveur_udp=initialisationSocketUDP("1024");
+    int s_serveur_udp=initialisationSocketUDP("4000");
     data.fin=-1;
 	
     //Lancement de la boucle d'ecoute

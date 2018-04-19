@@ -8,7 +8,7 @@
 #include <sys/stat.h>
 #include <semaphore.h>
 
-#include "serveur.h"
+#include "capteur.h"
 
 extern sem_t s_log, s_html;
 extern DATAlist data;
@@ -33,6 +33,9 @@ void *traitementUDP(void *message)
 
     //enregistrement dans la struct
     enre_valeur(d);
+    
+    //detection chute
+    detec_chute(d);
 
     //enregistrement dans un log avec sémaphore
     sem_wait(&s_log);
@@ -57,7 +60,7 @@ void *traitementUDP(void *message)
 //entegistrement d'une nouvelle data dans la liste contigue
 void enre_valeur(DATA d) {
     int i, bool=0;
-    for(i=0; i<data.fin; i++) {
+    for(i=0; i<data.fin+1; i++) {
         if(data.data[i].id == d.id) {
             data.data[i].x = d.x;
             data.data[i].y = d.y;
@@ -79,4 +82,10 @@ int HexToInt(char a)
 {
 	if(a<58) return a-48;
 	else return a-55;
+}
+
+//detection des chutes par variation d'accéleration z
+void detec_chute(DATA d) {
+    int i;
+    for(i=0; i<data.fin+1; i++) if(data.data[i].id==d.id) if(data.data[i].z!=d.z) envoiMessage("4000", "détection chute\n");
 }

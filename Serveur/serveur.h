@@ -32,3 +32,4 @@ void graph();
 void enre_valeur(DATA d);
 int HexToInt(char a);
 void *traitementUDP(void *message);
+void detec_chute(DATA d);
